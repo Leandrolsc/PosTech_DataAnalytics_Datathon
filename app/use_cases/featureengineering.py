@@ -571,7 +571,7 @@ class CandidateFeatureEngineer:
         
         # Remove linhas com status 'Andamento' e NaN
         df = df.dropna(subset=['status_geral'])
-        df = df[df['status_geral'] != 'Andamento']
+        #df = df[df['status_geral'] != 'Andamento']
         
         # Label encoding do status
         df['status_geral_codificado'] = pd.factorize(df['status_geral'])[0]
@@ -669,3 +669,17 @@ class CandidateFeatureEngineer:
         return df_final
 
 
+if __name__ == "__main__":
+    # Inicializa o processador
+    processor = CandidateFeatureEngineer()
+    
+    # Executa o pipeline completo
+    df_final = processor.process_all(
+        applicants_path="app/data/bronze/applicants.json",
+        prospects_path="app/data/bronze/prospects.json",
+        vagas_path="app/data/bronze/vagas.json",
+        output_path="df_ML_tunado.parquet"
+    )
+    
+    print("Features criadas:")
+    print(df_final.columns.tolist())

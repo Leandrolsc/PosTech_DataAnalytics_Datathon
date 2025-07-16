@@ -14,4 +14,3 @@ class Repositories:
     def load_applicants(self):
         return pd.read_parquet(f"{self.data_path}/applicants.parquet")
     
-    

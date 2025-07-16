@@ -6,14 +6,12 @@ from pathlib import Path
 class Pipeline:
     
     def bronze():
-        # Caminhos dos arquivos
         vagas_path = Path("app/data/bronze/vagas.json")
         applicants_path = Path("app/data/bronze/applicants.json")
 
         def json_to_flat_df(json_path):
             with open(json_path, encoding="utf-8") as f:
                 data = json.load(f)
-            # Adiciona o código como campo
             records = []
             for codigo, info in data.items():
                 if not isinstance(info, dict):
@@ -21,22 +19,15 @@ class Pipeline:
                 rec = {"codigo": codigo}
                 rec.update(info)
                 records.append(rec)
-            # Normaliza para DataFrame
             return pd.json_normalize(records)
 
-        # Processa os dois arquivos
         df_vagas = json_to_flat_df(vagas_path)
         df_applicants = json_to_flat_df(applicants_path)
 
-        # Salva em Parquet
         df_vagas.to_parquet("app/data/bronze/vagas.parquet", index=False)
         df_applicants.to_parquet("app/data/bronze/applicants.parquet", index=False)
 
         print("Arquivos Parquet gerados com sucesso!")
-
-
-        # Para o prospects.json por se tratar de um arquivo que tem as vagas x aplicantes, preciso que traga o  primeiro nivel apenas do json, e deixe um aplicante por linha ai traga as informações do apliocante
-        # ...existing code...
 
         prospects_path = Path("app/data/bronze/prospects.json")
 
@@ -129,3 +120,4 @@ class Pipeline:
         df_applicants_filtrado = df_applicants_filtrado[df_applicants_cols]
         df_applicants_filtrado = df_applicants_filtrado.drop_duplicates()
         df_applicants_filtrado.to_parquet('app/data/silver/applicants.parquet', index=False)
+
