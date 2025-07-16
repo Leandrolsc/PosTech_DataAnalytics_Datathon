@@ -7,6 +7,9 @@ from typing import Set, Optional, Dict, List
 import nltk
 from nltk.corpus import stopwords
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from use_cases.pipeline import Pipeline
 
 class CandidateFeatureEngineer:
     """
@@ -110,7 +113,7 @@ class CandidateFeatureEngineer:
             'match_espanhol',
             'match_areas_contagem', 
             'match_areas_percentual',
-            'informacoes_basicas_tipo_contratacao_codificada',
+            'informacoes_basicas.tipo_contratacao_codificada',
             'informacoes_basicas_prazo_contratacao_codificada',
             'informacoes_basicas_prioridade_vaga_codificada',
             'informacoes_basicas_origem_vaga_codificada',
@@ -169,10 +172,10 @@ class CandidateFeatureEngineer:
             return None
         
         vagas_columns = [
-            'perfil_vaga_demais_observacoes', 
-            'informacoes_basicas_titulo_vaga',
-            'perfil_vaga_principais_atividades', 
-            'perfil_vaga_competencia_tecnicas_e_comportamentais'
+            'perfil_vaga.demais_observacoes', 
+            'informacoes_basicas.titulo_vaga',
+            'perfil_vaga.principais_atividades', 
+            'perfil_vaga.competencia_tecnicas_e_comportamentais'
         ]
         
         vagas_columns_existentes = [col for col in vagas_columns if col in vaga_data.columns]
@@ -261,7 +264,7 @@ class CandidateFeatureEngineer:
             Series com contagem e percentual de match
         """
         str_vaga = row['areas_atuacao_limpas']
-        str_candidato = row['informacoes_profissionais_area_atuacao']
+        str_candidato = row['informacoes_profissionais.area_atuacao']
 
         if pd.isna(str_vaga):
             str_vaga = ''
@@ -282,7 +285,7 @@ class CandidateFeatureEngineer:
         return pd.Series([match_contagem, match_percentual], 
                         index=['match_areas_contagem', 'match_areas_percentual'])
     
-    def load_data(self, applicants_path: str, prospects_path: str, vagas_path: str) -> tuple:
+    def load_data(self) -> tuple:
         """
         Carrega os dados dos arquivos JSON.
         
@@ -294,76 +297,11 @@ class CandidateFeatureEngineer:
         Returns:
             Tupla com os três DataFrames
         """
-        df_applicants = pd.read_json(applicants_path).T
-        df_prospects = pd.read_json(prospects_path).T
-        df_vagas = pd.read_json(vagas_path).T
+        df_applicants, df_prospects, df_vagas = Pipeline.silver_feature()
         
         return df_applicants, df_prospects, df_vagas
     
-    def process_applicants(self, df_applicants: pd.DataFrame) -> pd.DataFrame:
-        """
-        Processa e normaliza dados dos candidatos.
-        
-        Args:
-            df_applicants: DataFrame com dados dos candidatos
-            
-        Returns:
-            DataFrame normalizado
-        """
-        cols_com_dicionario = ['infos_basicas', 'informacoes_pessoais', 
-                              'informacoes_profissionais', 'formacao_e_idiomas', 'cargo_atual']
-        
-        df_normalizado = self._normalize_json_columns(df_applicants, cols_com_dicionario)
-        df_normalizado = df_normalizado.dropna(subset=['infos_basicas_codigo_profissional'])
-        
-        return df_normalizado
-    
-    def process_prospects(self, df_prospects: pd.DataFrame) -> pd.DataFrame:
-        """
-        Processa e normaliza dados dos prospects.
-        
-        Args:
-            df_prospects: DataFrame com dados dos prospects
-            
-        Returns:
-            DataFrame normalizado e "derretido"
-        """
-        df_prospects.reset_index(inplace=True)
-        df_prospects.rename(columns={'index': 'id_vaga'}, inplace=True)
-        
-        # Primeiro nível de normalização
-        df_normalizado = self._normalize_json_columns(df_prospects, ['prospects'])
-        
-        # Melting dos dados
-        df_melted = df_normalizado.melt(
-            id_vars=['titulo', 'modalidade', 'id_vaga'],
-            var_name='n_prospect',
-            value_name='dict_prospect'
-        )
-        
-        # Segundo nível de normalização
-        df_final = self._normalize_json_columns(df_melted, ['dict_prospect'])
-        
-        return df_final
-    
-    def process_vagas(self, df_vagas: pd.DataFrame) -> pd.DataFrame:
-        """
-        Processa e normaliza dados das vagas.
-        
-        Args:
-            df_vagas: DataFrame com dados das vagas
-            
-        Returns:
-            DataFrame normalizado
-        """
-        df_vagas.reset_index(inplace=True)
-        df_vagas.rename(columns={'index': 'codigo'}, inplace=True)
-        
-        cols_com_dicionario = ['informacoes_basicas', 'perfil_vaga', 'beneficios']
-        df_normalizado = self._normalize_json_columns(df_vagas, cols_com_dicionario)
-        
-        return df_normalizado
-    
+
     def merge_dataframes(self, df_prospects: pd.DataFrame, df_vagas: pd.DataFrame, 
                         df_applicants: pd.DataFrame) -> pd.DataFrame:
         """
@@ -381,14 +319,19 @@ class CandidateFeatureEngineer:
         df_vagas_renamed = df_vagas.rename(columns={'codigo': 'id_vaga'})
         
         # Primeiro merge: prospects + vagas
-        df_merged = pd.merge(df_prospects, df_vagas_renamed, on='id_vaga', how='left')
+        df_merged = pd.merge(df_prospects, 
+                             df_vagas_renamed, 
+                             left_on='vaga_codigo',
+                             right_on='id_vaga', 
+                             how='left'
+                             )
         
         # Segundo merge: resultado + candidatos
         df_final = pd.merge(
             df_merged, 
             df_applicants,
-            left_on='dict_prospect_codigo',
-            right_on='infos_basicas_codigo_profissional',
+            left_on='codigo',
+            right_on='codigo',
             how='left'
         )
         
@@ -458,13 +401,13 @@ class CandidateFeatureEngineer:
             DataFrame com features de match de idiomas
         """
         # Match inglês
-        nivel_candidato_ingles = df['formacao_e_idiomas_nivel_ingles'].map(self.mapa_niveis_idioma).fillna(0)
-        nivel_vaga_ingles = df['perfil_vaga_nivel_ingles'].map(self.mapa_niveis_idioma).fillna(0)
+        nivel_candidato_ingles = df['formacao_e_idiomas.nivel_ingles'].map(self.mapa_niveis_idioma).fillna(0)
+        nivel_vaga_ingles = df['perfil_vaga.nivel_ingles'].map(self.mapa_niveis_idioma).fillna(0)
         df['match_ingles'] = (nivel_candidato_ingles >= nivel_vaga_ingles).astype(int)
         
         # Match espanhol
-        nivel_candidato_espanhol = df['formacao_e_idiomas_nivel_espanhol'].map(self.mapa_niveis_idioma).fillna(0)
-        nivel_vaga_espanhol = df['perfil_vaga_nivel_espanhol'].map(self.mapa_niveis_idioma).fillna(0)
+        nivel_candidato_espanhol = df['formacao_e_idiomas.nivel_espanhol'].map(self.mapa_niveis_idioma).fillna(0)
+        nivel_vaga_espanhol = df['perfil_vaga.nivel_espanhol'].map(self.mapa_niveis_idioma).fillna(0)
         df['match_espanhol'] = (nivel_candidato_espanhol >= nivel_vaga_espanhol).astype(int)
         
         return df
@@ -479,8 +422,8 @@ class CandidateFeatureEngineer:
         Returns:
             DataFrame com feature de match acadêmico
         """
-        nivel_candidato = df['formacao_e_idiomas_nivel_academico'].map(self.mapa_academico).fillna(0)
-        nivel_vaga = df['perfil_vaga_nivel_academico'].map(self.mapa_academico).fillna(0)
+        nivel_candidato = df['formacao_e_idiomas.nivel_academico'].map(self.mapa_academico).fillna(0)
+        nivel_vaga = df['perfil_vaga.nivel_academico'].map(self.mapa_academico).fillna(0)
         df['match_academico'] = (nivel_candidato >= nivel_vaga).astype(int)
         
         return df
@@ -497,25 +440,25 @@ class CandidateFeatureEngineer:
         """
         # Lista de colunas para fazer label encoding
         colunas_para_encoding = [
-            'informacoes_basicas_tipo_contratacao',
-            'informacoes_basicas_prazo_contratacao',
-            'informacoes_basicas_prioridade_vaga',
-            'informacoes_basicas_origem_vaga',
-            'perfil_vaga_estado',
-            'perfil_vaga_nivel profissional',
-            'perfil_vaga_nivel_academico',
-            'perfil_vaga_nivel_ingles',
-            'perfil_vaga_nivel_espanhol',
-            'perfil_vaga_viagens_requeridas',
-            'formacao_e_idiomas_nivel_academico',
-            'formacao_e_idiomas_nivel_ingles',
-            'formacao_e_idiomas_nivel_espanhol'
+            'informacoes_basicas.tipo_contratacao',
+            'informacoes_basicas.prazo_contratacao',
+            'informacoes_basicas.prioridade_vaga',
+            'informacoes_basicas.origem_vaga',
+            'perfil_vaga.estado',
+            'perfil_vaga.nivel profissional',
+            'perfil_vaga.nivel_academico',
+            'perfil_vaga.nivel_ingles',
+            'perfil_vaga.nivel_espanhol',
+            'perfil_vaga.viagens_requeridas',
+            'formacao_e_idiomas.nivel_academico',
+            'formacao_e_idiomas.nivel_ingles',
+            'formacao_e_idiomas.nivel_espanhol'
         ]
         
         # Trata coluna de tipo contratação
-        df['informacoes_basicas_tipo_contratacao'] = df['informacoes_basicas_tipo_contratacao'].fillna('').astype(str)
-        df['informacoes_basicas_tipo_contratacao'] = df['informacoes_basicas_tipo_contratacao'].str.replace(', ', ',')
-        df['informacoes_basicas_tipo_contratacao'] = df['informacoes_basicas_tipo_contratacao'].str.strip()
+        df['informacoes_basicas.tipo_contratacao'] = df['informacoes_basicas.tipo_contratacao'].fillna('').astype(str)
+        df['informacoes_basicas.tipo_contratacao'] = df['informacoes_basicas.tipo_contratacao'].str.replace(', ', ',')
+        df['informacoes_basicas.tipo_contratacao'] = df['informacoes_basicas.tipo_contratacao'].str.strip()
         
         # Aplica label encoding
         for col in colunas_para_encoding:
@@ -535,17 +478,17 @@ class CandidateFeatureEngineer:
             DataFrame com features de áreas
         """
         # Limpa áreas da vaga
-        df['areas_atuacao_limpas'] = df['perfil_vaga_areas_atuacao'].apply(
+        df['areas_atuacao_limpas'] = df['perfil_vaga.areas_atuacao'].apply(
             self._limpar_e_padronizar_separadores
         )
         
         # One-hot encoding para áreas da vaga
         df_areas_vaga = df['areas_atuacao_limpas'].str.get_dummies(sep=', ')
-        df_areas_vaga = df_areas_vaga.add_prefix('perfil_vaga_areas_atuacao_')
+        df_areas_vaga = df_areas_vaga.add_prefix('perfil_vaga.areas_atuacao_')
         
         # One-hot encoding para áreas do candidato
-        df_areas_candidato = df['informacoes_profissionais_area_atuacao'].str.get_dummies(sep=', ')
-        df_areas_candidato = df_areas_candidato.add_prefix('informacoes_profissionais_area_atuacao_')
+        df_areas_candidato = df['informacoes_profissionais.area_atuacao'].str.get_dummies(sep=', ')
+        df_areas_candidato = df_areas_candidato.add_prefix('informacoes_profissionais.area_atuacao_')
         
         # Junta as features
         df = pd.concat([df, df_areas_vaga, df_areas_candidato], axis=1)
@@ -567,7 +510,7 @@ class CandidateFeatureEngineer:
             DataFrame filtrado com features de status
         """
         # Mapeia status
-        df['status_geral'] = df['dict_prospect_situacao_candidado'].map(self.mapeamento_status)
+        df['status_geral'] = df['situacao_candidado'].map(self.mapeamento_status)
         
         # Remove linhas com status 'Andamento' e NaN
         df = df.dropna(subset=['status_geral'])
@@ -593,10 +536,10 @@ class CandidateFeatureEngineer:
         
         # Adiciona colunas de áreas que foram criadas dinamicamente
         colunas_areas = [col for col in df.columns if 
-                        col.startswith('perfil_vaga_areas_atuacao_') or 
-                        col.startswith('informacoes_profissionais_area_atuacao_')]
+                        col.startswith('perfil_vaga.areas_atuacao_') or 
+                        col.startswith('informacoes_profissionais.area_atuacao_')]
         
-        colunas_finais = colunas_existentes + colunas_areas
+        colunas_finais = colunas_existentes + colunas_areas + ['codigo']
         
         # Filtra DataFrame
         df_modelo = df[colunas_finais]
@@ -606,8 +549,7 @@ class CandidateFeatureEngineer:
         
         return df_modelo
     
-    def process_all(self, applicants_path: str, prospects_path: str, vagas_path: str, 
-                   output_path: str = "df_ML_tunado.parquet") -> pd.DataFrame:
+    def process_all(self, output_path: str = "df_ML_tunado.parquet") -> pd.DataFrame:
         """
         Executa todo o pipeline de processamento.
         
@@ -621,22 +563,11 @@ class CandidateFeatureEngineer:
             DataFrame final processado
         """
         print("Carregando dados...")
-        df_applicants, df_prospects, df_vagas = self.load_data(
-            applicants_path, prospects_path, vagas_path
-        )
-        
-        print("Processando candidatos...")
-        df_applicants_processed = self.process_applicants(df_applicants)
-        
-        print("Processando prospects...")
-        df_prospects_processed = self.process_prospects(df_prospects)
-        
-        print("Processando vagas...")
-        df_vagas_processed = self.process_vagas(df_vagas)
+        df_applicants, df_prospects, df_vagas = self.load_data()     
         
         print("Juntando DataFrames...")
         df_merged = self.merge_dataframes(
-            df_prospects_processed, df_vagas_processed, df_applicants_processed
+            df_prospects, df_vagas, df_applicants
         )
         
         print("Criando features de compatibilidade...")
@@ -675,10 +606,7 @@ if __name__ == "__main__":
     
     # Executa o pipeline completo
     df_final = processor.process_all(
-        applicants_path="app/data/bronze/applicants.json",
-        prospects_path="app/data/bronze/prospects.json",
-        vagas_path="app/data/bronze/vagas.json",
-        output_path="df_ML_tunado.parquet"
+        output_path="app/data/silver/df_features.parquet"
     )
     
     print("Features criadas:")

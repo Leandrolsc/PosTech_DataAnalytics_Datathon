@@ -17,6 +17,8 @@ class GetFeaturesCase:
         df_features = pd.read_parquet(os.path.join(self.data_path, 'df_features.parquet'))
 
         # Filtra para encontrar a vaga selecionada pelo código
+        
+        df_features["id_vaga"] = df_features["id_vaga"].astype(str).str.replace(",", "")
         df = df_features[df_features["id_vaga"] == vaga_codigo]
          
-        return df  # Retorna o DataFrame de applicants como exemplo
+        return df  

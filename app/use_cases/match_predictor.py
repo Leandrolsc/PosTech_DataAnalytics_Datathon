@@ -22,7 +22,7 @@ class MatchPredictor:
         df_final_total = pd.read_parquet(df_path)
         
         y = df_final_total['status_geral_codificado']
-        colunas_para_remover = ['status_geral_codificado', 'id_vaga', 'dict_prospect_codigo']
+        colunas_para_remover = ['status_geral_codificado', 'id_vaga', 'codigo']
         X = df_final_total.drop(columns=colunas_para_remover)
         
         self.feature_columns = X.columns.tolist()
@@ -136,11 +136,18 @@ class MatchPredictor:
         
         return prob_match
     
-    def create_ranking(self, df_candidates):
+    def create_ranking(self, df_candidates,parameters=False):
         probs = self.predict_batch(df_candidates)
         
         df_ranking = df_candidates.copy()
         df_ranking['probabilidade_match'] = probs
         df_ranking = df_ranking.sort_values('probabilidade_match', ascending=False)
         
+        
+        if parameters:
+            return df_ranking
+        else:
+            colunas_para_exibir = ['codigo', 'id_vaga', 'probabilidade_match']
+            df_ranking = df_ranking[colunas_para_exibir]
+
         return df_ranking

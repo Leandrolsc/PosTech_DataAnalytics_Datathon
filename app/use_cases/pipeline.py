@@ -121,3 +121,52 @@ class Pipeline:
         df_applicants_filtrado = df_applicants_filtrado.drop_duplicates()
         df_applicants_filtrado.to_parquet('app/data/silver/applicants.parquet', index=False)
 
+
+    def silver_feature():
+        df_vagas = pd.read_parquet('app/data/silver/vagas.parquet')               
+        cols_vagas = ['codigo',
+                        'informacoes_basicas.titulo_vaga',
+                        'informacoes_basicas.origem_vaga',
+                        'informacoes_basicas.tipo_contratacao',
+                        'informacoes_basicas.prazo_contratacao',
+                        'informacoes_basicas.prioridade_vaga',
+                        'perfil_vaga.demais_observacoes',
+                        'perfil_vaga.principais_atividades',
+                        'perfil_vaga.competencia_tecnicas_e_comportamentais',                  
+                        'perfil_vaga.estado',
+                        'perfil_vaga.nivel profissional',
+                        'perfil_vaga.nivel_academico',
+                        'perfil_vaga.nivel_ingles',
+                        'perfil_vaga.nivel_espanhol',
+                        'perfil_vaga.viagens_requeridas',
+                        'perfil_vaga.areas_atuacao'
+                        ]
+        df_vagas = df_vagas[cols_vagas]
+
+
+        df_applicants = pd.read_parquet('app/data/silver/applicants.parquet')
+        cols_applicants = ['codigo',
+                            'infos_basicas.codigo_profissional',
+                            'informacoes_profissionais.area_atuacao',
+                            'formacao_e_idiomas.nivel_academico',
+                            'formacao_e_idiomas.nivel_ingles',
+                            'formacao_e_idiomas.nivel_espanhol',
+                            'cv_pt'
+                            ]
+        
+        df_applicants = df_applicants[cols_applicants]
+
+
+        df_prospects = pd.read_parquet('app/data/silver/prospects.parquet')
+
+        cols_prospects = ['vaga_codigo',
+                        'codigo',
+                        'modalidade',
+                        'titulo',
+                        'situacao_candidado'
+                        ]
+        
+        df_prospects = df_prospects[cols_prospects]
+
+
+        return df_applicants, df_prospects, df_vagas
