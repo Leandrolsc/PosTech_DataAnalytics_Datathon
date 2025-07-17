@@ -9,4 +9,4 @@ scikeras==0.13.0
 scikit_learn==1.6.1
 streamlit==1.41.1
 streamlit_option_menu==0.4.0
-tensorflow==2.19.0
+tensorflow==2.15.0
