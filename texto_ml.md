@@ -278,7 +278,7 @@ O sistema cria automaticamente colunas através de **one-hot encoding** para:
 
 ## Estrutura Final para o Modelo
 
-O dataset final contém aproximadamente **22 colunas principais** mais as colunas dinâmicas de áreas de atuação, totalizando as features necessárias para o modelo de machine learning de matching candidato-vaga.
+O dataset final contém aproximadamente **22 colunas principais** mais as colunas dinâmicas, totalizando as features(61 colunas) necessárias para o modelo de machine learning de matching candidato-vaga.
 
 ### Exemplo de Saída Final
 ```python

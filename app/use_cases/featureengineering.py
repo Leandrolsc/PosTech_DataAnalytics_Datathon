@@ -549,7 +549,7 @@ class CandidateFeatureEngineer:
         
         return df_modelo
     
-    def process_all(self, output_path: str = "df_ML_tunado.parquet") -> pd.DataFrame:
+    def process_all(self, output_path: str = "app/data/silver/df_ML_tunado.parquet") -> pd.DataFrame:
         """
         Executa todo o pipeline de processamento.
         
@@ -592,7 +592,7 @@ class CandidateFeatureEngineer:
         df_final = self.prepare_model_data(df_merged)
         
         print(f"Salvando resultado em {output_path}...")
-        df_final.to_parquet(output_path, index=False)
+        df_final.to_parquet(output_path, index=False, compression='gzip')
         
         print(f"Processamento concluído!")
         print(f"DataFrame final contém {df_final.shape[0]} linhas e {df_final.shape[1]} colunas.")

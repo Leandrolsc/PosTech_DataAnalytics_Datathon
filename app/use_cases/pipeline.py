@@ -87,7 +87,7 @@ class Pipeline:
 
         prospects_cols = [col for col in df_prospects.columns]
         df_prospects_filtrado = df_prospects_full[prospects_cols]
-        df_prospects_filtrado.to_parquet('app/data/silver/prospects.parquet', index=False)
+        df_prospects_filtrado.to_parquet('app/data/silver/prospects.parquet', index=False, compression='gzip')
 
         # vagas
 
@@ -102,7 +102,7 @@ class Pipeline:
         df_vagas_cols = [col for col in df_vagas.columns]
         df_vagas_filtrado = df_vagas_filtrado[df_vagas_cols]
         df_vagas_filtrado = df_vagas_filtrado.drop_duplicates()
-        df_vagas_filtrado.to_parquet('app/data/silver/vagas.parquet', index=False)
+        df_vagas_filtrado.to_parquet('app/data/silver/vagas.parquet', index=False, compression='gzip')
 
 
 
@@ -119,7 +119,7 @@ class Pipeline:
         df_applicants_cols = [col for col in df_applicants.columns]
         df_applicants_filtrado = df_applicants_filtrado[df_applicants_cols]
         df_applicants_filtrado = df_applicants_filtrado.drop_duplicates()
-        df_applicants_filtrado.to_parquet('app/data/silver/applicants.parquet', index=False)
+        df_applicants_filtrado.to_parquet('app/data/silver/applicants.parquet', index=False, compression='gzip')
 
 
     def silver_feature():
@@ -170,3 +170,6 @@ class Pipeline:
 
 
         return df_applicants, df_prospects, df_vagas
+    
+
+

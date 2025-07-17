@@ -6,7 +6,7 @@ class Repositories:
         self.data_path = data_path
 
     def load_vagas(self):
-        return pd.read_parquet(f"{self.data_path}/vagas.parquet")
+        return pd.read_parquet(f"{self.data_path}/vagas.parquet",)
  
     def load_prospects(self):
         return pd.read_parquet(f"{self.data_path}/prospects.parquet")
