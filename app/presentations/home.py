@@ -5,7 +5,7 @@ from streamlit_option_menu import option_menu
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from presentations.custom_pages import ranking, input 
+from presentations.custom_pages import ranking, input, modelo
 
 st.set_page_config(
     page_title="Datathon - Decision - Recrutamento e Seleção",
@@ -25,14 +25,16 @@ st.set_page_config(
 
 with st.sidebar:
     escolha = option_menu(
-        "Menu",
+        "",
         ["Home", 
          "Ranking de Candidatos", 
          "Input",
+         "Explicacao do Modelo ML",
          ],
-        icons=['house', 
+        icons=['', 
                'bar-chart', 
-               'gear'
+               'gear',
+               'question-circle'
                ],
         menu_icon="cast",
         default_index=0
@@ -42,6 +44,8 @@ if escolha == "Ranking de Candidatos":
     ranking.exibir()
 elif escolha == "Input":
     input.exibir()
+elif escolha == "Explicacao do Modelo ML":
+    modelo.exibir()
 elif escolha == "Home":
     st.title("Datathon - Decision - Recrutamento e Seleção")
     st.markdown("""

@@ -1,5 +1,6 @@
 __pycache__/
-data/
+bronze/
+gold/
 ai_agent/
 notebooks/
 .env
