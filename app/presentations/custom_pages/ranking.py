@@ -96,7 +96,7 @@ def exibir():
 
         #st.markdown(f"**Aplicante selecionado:** {nome_selecionado}")
 
-        st.markdown(f"Vagas aplicadas pelo(a) **{nome_selecionado}**")
+        st.markdown(f"Vagas aplicadas pelo(a): **{nome_selecionado}**")
         prospects_df_applicants = prospects.get_prospects_applicants(candidato_selecionado)
 
         features_df_applicants = features_case.get_features_applicants(candidato_selecionado)
