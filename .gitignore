@@ -2,5 +2,5 @@ __pycache__/
 bronze/
 gold/
 ai_agent/
-notebooks/
+testes/
 .env

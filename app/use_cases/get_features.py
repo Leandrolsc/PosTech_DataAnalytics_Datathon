@@ -12,13 +12,16 @@ class GetFeaturesCase:
         """
         self.data_path = data_path
 
-    def get_features(self, vaga_codigo: str) -> pd.DataFrame:
-        # Carrega os DataFrames necessários
-        df_features = pd.read_parquet(os.path.join(self.data_path, 'df_features.parquet'))
-
-        # Filtra para encontrar a vaga selecionada pelo código
-        
+    def get_features_vaga(self, vaga_codigo: str) -> pd.DataFrame:
+        df_features = pd.read_parquet(os.path.join(self.data_path, 'df_features.parquet'))        
         df_features["id_vaga"] = df_features["id_vaga"].astype(str).str.replace(",", "")
         df = df_features[df_features["id_vaga"] == vaga_codigo]
          
         return df  
+    
+    def get_features_applicants(self, applicant_codigo: str) -> pd.DataFrame:
+        df_features = pd.read_parquet(os.path.join(self.data_path, 'df_features.parquet'))        
+        df_features["codigo"] = df_features["codigo"].astype(str).str.replace(",", "")
+        df = df_features[df_features["codigo"] == applicant_codigo]
+         
+        return df

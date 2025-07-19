@@ -14,7 +14,7 @@ class GetProspectsUseCase:
         """
         self.repositories = Repositories(data_path)
 
-    def get_prospects(self, vaga_codigo: str) -> pd.DataFrame:
+    def get_prospects_vaga(self, vaga_codigo: str) -> pd.DataFrame:
         """
         Retorna um DataFrame do Pandas com os prospects para uma vaga específica,
         contendo apenas as colunas pré-definidas.
@@ -59,4 +59,52 @@ class GetProspectsUseCase:
 
         # Retorna o DataFrame filtrado e com as colunas corretas
         return df_prospects_vaga_final
+    
+
+    def get_prospects_applicants(self, codigo_applicant: str) -> pd.DataFrame:
+        """
+        Retorna um DataFrame do Pandas com os prospects para uma vaga específica,
+        contendo apenas as colunas pré-definidas.
+
+        Args:
+            vaga_codigo: O código da vaga para a qual os prospects serão retornados.
+
+        Returns:
+            Um DataFrame do Pandas com os prospects filtrados.
+        """
+        # Carrega os DataFrames de vagas e prospects
+        df_applicants = self.repositories.load_applicants()
+        df_prospects = self.repositories.load_prospects()
+
+        # Filtra para encontrar a vaga selecionada pelo código
+        # Usar .get(0) com um default ou verificar se o dataframe não está vazio é mais seguro
+        applicant_selecionado_series_series = df_applicants[df_applicants["codigo"] == codigo_applicant]
+        if applicant_selecionado_series_series.empty:
+            # Retorna um DataFrame vazio se a vaga não for encontrada
+            return pd.DataFrame()
+            
+        applicant_selecionado = applicant_selecionado_series_series.iloc[0]
+
+        # Filtra os prospects que aplicaram para a vaga selecionada
+        df_prospects_applicant = df_prospects[df_prospects["codigo"] == applicant_selecionado["codigo"]].copy()
+
+        # Define a lista de colunas que devem ser retornadas
+        df_prospects_columns = [
+            'vaga_codigo',
+            'codigo',  # Codigo do aplicante
+            'titulo',
+            'nome',
+            'data_candidatura',
+            'situacao_candidado'
+        ]
+
+        # Garante que todas as colunas existem no DataFrame antes de filtrar,
+        # para evitar KeyErrors.
+        cols_existentes = [col for col in df_prospects_columns if col in df_prospects_applicant.columns]
+        
+        # Filtra o DataFrame para conter apenas as colunas desejadas
+        df_prospects_applicant_final = df_prospects_applicant[cols_existentes]
+
+        # Retorna o DataFrame filtrado e com as colunas corretas
+        return df_prospects_applicant_final
 
