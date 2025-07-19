@@ -10,3 +10,5 @@ scikit_learn==1.6.1
 streamlit==1.41.1
 streamlit_option_menu==0.4.0
 tensorflow==2.19.0
+streamlit-aggrid==1.1.6
+
