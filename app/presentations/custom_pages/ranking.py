@@ -57,7 +57,7 @@ def exibir():
         'probabilidade_match': 'Nível de Aderência à vaga (Match)'
     })
 
-    st.write(prospects_df_vaga)
+    st.dataframe(prospects_df_vaga)
 
 
 
@@ -97,4 +97,4 @@ def exibir():
         'probabilidade_match': 'Nível de Aderência à vaga (Match)'
     })
 
-    st.write(prospects_df_applicants)
+    st.dataframe(prospects_df_applicants)

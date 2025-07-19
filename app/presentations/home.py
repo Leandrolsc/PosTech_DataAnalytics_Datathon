@@ -10,7 +10,7 @@ from presentations.custom_pages import ranking, modelo
 st.set_page_config(
     page_title="Datathon - Decision - Recrutamento e Seleção",
     page_icon="bar-chart",
-    layout="centered",
+    layout="wide", #centered
     initial_sidebar_state="expanded",
     menu_items={
         'Report a bug': "https://github.com/Leandrolsc/PosTech_DataAnalytics_Datathon/issues",
