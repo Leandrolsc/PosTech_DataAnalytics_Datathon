@@ -5,7 +5,7 @@ from streamlit_option_menu import option_menu
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from presentations.custom_pages import ranking, modelo
+from presentations.custom_pages import ranking, modelo, glossario
 
 st.set_page_config(
     page_title="Aderis X",
@@ -28,7 +28,8 @@ with st.sidebar:
         "",
         ["Introdução", 
          "Ranking de Candidatos", 
-         "Explicacao do Modelo ML",
+         "Guia Aderis X",
+         "Glossário Aderis"
          ],
         icons=['', 
                'bar-chart', 
@@ -40,8 +41,10 @@ with st.sidebar:
 
 if escolha == "Ranking de Candidatos":
     ranking.exibir()
-elif escolha == "Explicacao do Modelo ML":
+elif escolha == "Guia Aderis X":
     modelo.exibir()
+elif escolha == "Glossário Aderis":
+    glossario.exibir()
 elif escolha == "Introdução":
     st.title("Aderis X – Datathon")
 

@@ -79,17 +79,15 @@ class MatchPredictor:
         """
         Atualiza histórico de predições, tratando diferentes tipos de entrada.
         """
-        # --- CORREÇÃO APLICADA AQUI ---
-        # Garante que a chave 'prediction_history' exista.
+
         if 'prediction_history' not in self.background_data:
             self.background_data['prediction_history'] = []
 
-        # Processa a predição para garantir que seja um float ou uma lista de floats.
         if isinstance(prediction, np.ndarray):
             processed_prediction = prediction.tolist()
         elif np.isscalar(prediction):
             processed_prediction = float(prediction)
-        else:  # Assume que já é uma lista ou um tipo compatível
+        else: 
             processed_prediction = prediction
             
         prediction_entry = {
@@ -214,7 +212,6 @@ class MatchPredictor:
         self.is_trained = True
         print("Modelo carregado com sucesso!")
 
-    # <--- NOVO MÉTODO DE EXPLICABILIDADE --->
     def explain_batch_with_shap(self, df_candidates, top_n=3):
         """
         Gera explicações SHAP para um lote de candidatos usando GradientExplainer.
@@ -260,14 +257,10 @@ class MatchPredictor:
             shap_row = shap_values[idx].flatten()
             shap_series = pd.Series(shap_row, index=self.feature_columns)
             
-            # --- LÓGICA MODIFICADA PARA PEGAR MELHORES E PIORES ---
-            # Pega os top N contribuidores positivos (os que mais ajudam)
             top_positive = shap_series[shap_series > 0].sort_values(ascending=False).head(top_n)
             
-            # Pega os top N contribuidores negativos (os que mais atrapalham)
             top_negative = shap_series[shap_series < 0].sort_values(ascending=True).head(top_n)
 
-            # Combina os dois grupos para a explicação
             combined_series = pd.concat([top_positive, top_negative])
 
             for feature, shap_val in combined_series.items():
@@ -293,7 +286,6 @@ class MatchPredictor:
 
         return df_explanations
 
-    # ... (outros métodos como predict_match, create_ranking, etc., permanecem aqui) ...
     def predict_match(self, input_data):
         if not self.is_trained: raise ValueError("Modelo não foi treinado ou carregado!")
         if isinstance(input_data, dict): df_input = pd.DataFrame([input_data])

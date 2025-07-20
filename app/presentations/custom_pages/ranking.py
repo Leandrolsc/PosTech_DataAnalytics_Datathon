@@ -186,7 +186,7 @@ def exibir():
 
         if selected_v is not None and not pd.DataFrame(selected_v).empty:
             vaga_selecionada = selected_v['Vaga'].values[0]
-            st.markdown(f"\n🧠 Tabela descritiva SHAP para o(a) **{nome_selecionado}** na vaga **{vaga_selecionada}** com as top 5 variaveis que mais impactaram o modelo.")
+            st.markdown(f"\n🧠 Tabela descritiva SHAP para o(a) **{nome_selecionado}** na vaga **{vaga_selecionada}** com as variaveis que mais impactaram o modelo.")
             
             id_vaga_selecionada = selected_v['id_vaga'].values[0]
 
@@ -202,39 +202,22 @@ def exibir():
                 top_3_asc = df_shap_explanations[:3]
               
                 top_3_desc = df_shap_explanations[3:]
-                
-                
-                st.markdown("Top 3 variaveis que mais auxiliaram o modelo")
-                st.dataframe(
-                    top_3_asc[['feature', 'shap_value', 'valor_original']],
-                    use_container_width=True,
-                    column_config={
-                        "feature": "Fator de Influência",
-                        "valor_original": "Valor do Candidato",
-                        "shap_value": st.column_config.NumberColumn(
-                            "Impacto na Previsão",
-                            help="Valores positivos aumentam a chance de match (verde), valores negativos diminuem (vermelho).",
-                            format="%.4f"
-                        )
-                    },
-                    hide_index=True,
-                )
 
-                st.markdown("Top 3 variaveis que mais atrapalharam o modelo")
-                st.dataframe(
-                    top_3_desc[['feature', 'shap_value', 'valor_original']],
-                    use_container_width=True,
-                    column_config={
-                        "feature": "Fator de Influência",
-                        "valor_original": "Valor do Candidato",
-                        "shap_value": st.column_config.NumberColumn(
-                            "Impacto na Previsão",
-                            help="Valores positivos aumentam a chance de match (verde), valores negativos diminuem (vermelho).",
-                            format="%.4f"
-                        )
-                    },
-                    hide_index=True,
-                )
+                st.markdown(f"""
+                        Top 3 variaveis que mais auxiliaram o modelo
+                            
+                            - Feature {top_3_asc['feature'][0]}
+                            - Feature {top_3_asc['feature'][1]}
+                            - Feature {top_3_asc['feature'][2]}
+
+                        Top 3 variaveis que mais atrapalharam o modelo
+                            
+                            - Feature {top_3_desc['feature'][3]}
+                            - Feature {top_3_desc['feature'][4]}
+                            - Feature {top_3_desc['feature'][5]}
+                
+                    """)
+
 
 
             except Exception as e:
