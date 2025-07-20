@@ -37,10 +37,16 @@ def exibir():
     vaga_selecionada_codigo = lista_vagas[lista_vagas['titulo'] == vaga_selecionada]['codigo'].values[0]
     prospects_df_vaga = prospects.get_prospects_vaga(vaga_selecionada_codigo)
 
-
     features_case = GetFeaturesCase()
     features_df_vaga = features_case.get_features_vaga(vaga_selecionada_codigo)
 
+    def classificar_aderencia(prob):
+        if prob >= 0.8:
+            return 'Alta'
+        elif prob >= 0.5:
+            return 'Média'
+        else:
+            return 'Baixa'
 
     probabilidade = predictor.create_ranking(features_df_vaga)
     prospects_df_vaga = prospects_df_vaga.merge(probabilidade, on='codigo', how='left')
@@ -53,6 +59,9 @@ def exibir():
                         'situacao_candidado', 
                         'probabilidade_match']
     prospects_df_vaga = prospects_df_vaga[colunas_para_exibir]
+
+    prospects_df_vaga['probabilidade_match'] = prospects_df_vaga['probabilidade_match'].round(2)
+    prospects_df_vaga['Nível de Aderência'] = prospects_df_vaga['probabilidade_match'].apply(classificar_aderencia)
     prospects_df_vaga = prospects_df_vaga.rename(columns={
         'nome': 'Nome',
         'data_candidatura': 'Data de Aplicação',
@@ -68,6 +77,12 @@ def exibir():
             filter=False,
             editable=False,
             sortable=True
+        )
+    gb.configure_column(
+            "Nível de Aderência à vaga (Match)",
+            type=["numericColumn", "numberColumnFilter", "customNumericFormat"],
+            precision=2,
+            valueFormatter="x.toFixed(2)"
         )
     gb.configure_selection('single')  # apenas uma linha selecionável
     grid_options = gb.build()
@@ -85,7 +100,7 @@ def exibir():
 
     selected = grid_response["selected_rows"]
 
-    
+
 
 ########################################################################
 
@@ -112,6 +127,10 @@ def exibir():
                             'situacao_candidado', 
                             'probabilidade_match']
         prospects_df_applicants = prospects_df_applicants[colunas_para_exibir]
+
+        prospects_df_applicants['probabilidade_match'] = prospects_df_applicants['probabilidade_match'].round(2)
+        prospects_df_applicants['Nível de Aderência'] = prospects_df_applicants['probabilidade_match'].apply(classificar_aderencia)
+
         prospects_df_applicants = prospects_df_applicants.rename(columns={
             'titulo': 'Vaga',
             'data_candidatura': 'Data de Aplicação',
@@ -128,7 +147,13 @@ def exibir():
             editable=False,
             sortable=True
         )
-        # Não configure seleção!
+
+        gb.configure_column(
+            "Nível de Aderência à vaga (Match)",
+            type=["numericColumn", "numberColumnFilter", "customNumericFormat"],
+            precision=2,
+            valueFormatter="x.toFixed(2)"
+        )
 
         grid_options = gb.build()
 

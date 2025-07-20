@@ -499,7 +499,7 @@ class CandidateFeatureEngineer:
         
         return df
     
-    def create_status_features(self, df: pd.DataFrame) -> pd.DataFrame:
+    def create_status_features(self, df: pd.DataFrame, trainmodel: bool = False) -> pd.DataFrame:
         """
         Cria features de status e filtra dados para o modelo.
         
@@ -514,7 +514,8 @@ class CandidateFeatureEngineer:
         
         # Remove linhas com status 'Andamento' e NaN
         df = df.dropna(subset=['status_geral'])
-        #df = df[df['status_geral'] != 'Andamento']
+        if trainmodel:
+            df = df[df['status_geral'] != 'Andamento']  
         
         # Label encoding do status
         df['status_geral_codificado'] = pd.factorize(df['status_geral'])[0]
@@ -549,7 +550,7 @@ class CandidateFeatureEngineer:
         
         return df_modelo
     
-    def process_all(self, output_path: str = "app/data/silver/df_ML_tunado.parquet") -> pd.DataFrame:
+    def process_all(self, output_path: str = "app/data/silver/df_ML_tunado.parquet", trainmodel: bool = False) -> pd.DataFrame:
         """
         Executa todo o pipeline de processamento.
         
@@ -586,7 +587,7 @@ class CandidateFeatureEngineer:
         df_merged = self.create_area_features(df_merged)
         
         print("Criando features de status...")
-        df_merged = self.create_status_features(df_merged)
+        df_merged = self.create_status_features(df_merged, trainmodel=trainmodel)
         
         print("Preparando dados para o modelo...")
         df_final = self.prepare_model_data(df_merged)
@@ -606,7 +607,8 @@ if __name__ == "__main__":
     
     # Executa o pipeline completo
     df_final = processor.process_all(
-        output_path="app/data/silver/df_features.parquet"
+        output_path="app/data/silver/df_features_train.parquet"
+        ,trainmodel=True
     )
     
     print("Features criadas:")

@@ -10,8 +10,6 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
-import shap
-
 
 class MatchPredictor:
     def __init__(self):
@@ -153,53 +151,33 @@ class MatchPredictor:
             df_ranking = df_ranking[colunas_para_exibir]
 
         return df_ranking
+
+
+if __name__ == "__main__":
+    # --- Etapa 1: Treinamento e Salvamento do Modelo ---
     
-    def explain_batch_with_shap(self, df_candidates, background_data=None):
-        """
-        Gera explicações SHAP para múltiplos candidatos.
-
-        Parâmetros:
-        -----------
-        df_candidates : pd.DataFrame
-            DataFrame com múltiplos candidatos.
+    # Instanciar o preditor
+    predictor = MatchPredictor()
+    
+    # Definir o caminho para o dataset de treinamento
+    # Certifique-se de que este arquivo .parquet exista no caminho especificado.
+    data_path = "app/data/silver/df_features_train.parquet"
+    
+    # Treinar o modelo
+    print("🚀 Iniciando o treinamento do modelo...")
+    try:
+        accuracy = predictor.train_model(df_path=data_path)
+        print(f"\n✅ Treinamento concluído! Acurácia no conjunto de teste: {accuracy:.4f}")
         
-        background_data : DataFrame (opcional)
-            Conjunto de dados para baseline do SHAP.
-
-        Retorno:
-        --------
-        shap_values : List
-            Lista de shap_values individuais.
-        """
-        if not self.is_trained:
-            raise ValueError("Modelo não treinado ou carregado!")
-
-        df_input = df_candidates.copy()
-        for col in self.feature_columns:
-            if col not in df_input.columns:
-                df_input[col] = 0
-        df_input = df_input[self.feature_columns]
-        X_scaled = self.scaler.transform(df_input)
-
-        if background_data is None:
-            background_data = pd.DataFrame(np.zeros((100, len(self.feature_columns))), columns=self.feature_columns)
-            background_scaled = self.scaler.transform(background_data)
-        else:
-            background_data = background_data.copy()
-            for col in self.feature_columns:
-                if col not in background_data.columns:
-                    background_data[col] = 0
-            background_data = background_data[self.feature_columns]
-            background_scaled = self.scaler.transform(background_data)
-
-        try:
-            explainer = shap.DeepExplainer(self.model, background_scaled)
-        except Exception:
-            explainer = shap.KernelExplainer(self.model.predict, background_scaled)
-
-        shap_values = explainer.shap_values(X_scaled)
-
-
-        return shap_values, self.feature_columns
-
+        # Salvar o modelo treinado e os artefatos
+        print("\n💾 Salvando o modelo, scaler e features...")
+        predictor.save_model(
+            model_path="app/model_teste/match_model.h5",
+            scaler_path="app/model_teste/scaler.pkl",
+            features_path="app/model_teste/features.pkl"
+        )
+    except FileNotFoundError:
+        print(f"❌ Erro: Arquivo de dados não encontrado em '{data_path}'.")
+        print("Por favor, verifique o caminho e execute o script novamente.")
+        exit() # Encerra o script se o arquivo de dados não for encontrado
 
