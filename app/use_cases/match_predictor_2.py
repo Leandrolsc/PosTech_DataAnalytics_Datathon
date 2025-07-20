@@ -76,29 +76,13 @@ class MatchPredictor:
             }
     
     def _update_prediction_history(self, input_data, prediction, probability=None):
-        """
-        Atualiza histórico de predições, tratando diferentes tipos de entrada.
-        """
-        # --- CORREÇÃO APLICADA AQUI ---
-        # Garante que a chave 'prediction_history' exista.
-        if 'prediction_history' not in self.background_data:
-            self.background_data['prediction_history'] = []
-
-        # Processa a predição para garantir que seja um float ou uma lista de floats.
-        if isinstance(prediction, np.ndarray):
-            processed_prediction = prediction.tolist()
-        elif np.isscalar(prediction):
-            processed_prediction = float(prediction)
-        else:  # Assume que já é uma lista ou um tipo compatível
-            processed_prediction = prediction
-            
+        """Atualiza histórico de predições"""
         prediction_entry = {
             'timestamp': pd.Timestamp.now(),
             'input_shape': input_data.shape if hasattr(input_data, 'shape') else len(input_data),
-            'prediction': processed_prediction,
-            'probability': float(probability) if probability is not None and np.isscalar(probability) else None
+            'prediction': float(prediction) if np.isscalar(prediction) else prediction.tolist(),
+            'probability': float(probability) if probability is not None else None
         }
-        
         self.background_data['prediction_history'].append(prediction_entry)
         if len(self.background_data['prediction_history']) > 100:
             self.background_data['prediction_history'].pop(0)
@@ -123,6 +107,9 @@ class MatchPredictor:
         X_train_scaled = self.scaler.fit_transform(X_train_resampled)
         X_test_scaled = self.scaler.transform(X_test)
         
+        # <--- MUDANÇA CRÍTICA: Capturar a amostra de dados para o SHAP --->
+        # O SHAP precisa de uma amostra de dados reais para usar como referência.
+        # Usamos shap.sample para pegar 100 pontos representativos do treino.
         self.background_data['shap_background_sample'] = shap.sample(X_train_scaled, 100)
         
         self._capture_preprocessing_stats(df_final_total)
@@ -215,7 +202,7 @@ class MatchPredictor:
         print("Modelo carregado com sucesso!")
 
     # <--- NOVO MÉTODO DE EXPLICABILIDADE --->
-    def explain_batch_with_shap(self, df_candidates, top_n=3):
+    def explain_batch_with_shap(self, df_candidates, top_n=5):
         """
         Gera explicações SHAP para um lote de candidatos usando GradientExplainer.
 
@@ -225,8 +212,7 @@ class MatchPredictor:
             DataFrame com os dados dos candidatos a serem explicados.
         
         top_n : int
-            Número de features a serem retornadas para os melhores (positivos) e piores (negativos) 
-            contribuidores. Ex: top_n=3 retorna até 3 positivos e 3 negativos.
+            Número de features mais importantes a serem retornadas por instância.
 
         Retorno:
         --------
@@ -237,58 +223,55 @@ class MatchPredictor:
         if not self.is_trained:
             raise ValueError("Modelo não foi treinado ou carregado!")
         
+        # 1. Recuperar a amostra de background necessária para o SHAP
         shap_background_sample = self.background_data.get('shap_background_sample')
         if shap_background_sample is None:
             raise ValueError("Amostra de background para SHAP não encontrada. O modelo foi treinado corretamente?")
 
+        # 2. Preparar os dados de entrada
         df_input = df_candidates.copy()
         for col in self.feature_columns:
             if col not in df_input.columns:
                 df_input[col] = 0
         df_input = df_input[self.feature_columns]
 
+        # 3. Escalar os dados
         X_scaled = self.scaler.transform(df_input)
 
+        # 4. Inicializar o explainer e calcular os valores SHAP
         explainer = shap.GradientExplainer(self.model, shap_background_sample)
         shap_values = explainer.shap_values(X_scaled)
 
         if isinstance(shap_values, list):
             shap_values = shap_values[0]
 
+        # 5. Processar os resultados em um DataFrame
         explanations = []
         for idx in range(len(df_input)):
+            # --- CORREÇÃO APLICADA AQUI ---
+            # Usamos .flatten() para transformar o array de shape (60, 1) em (60,)
             shap_row = shap_values[idx].flatten()
             shap_series = pd.Series(shap_row, index=self.feature_columns)
             
-            # --- LÓGICA MODIFICADA PARA PEGAR MELHORES E PIORES ---
-            # Pega os top N contribuidores positivos (os que mais ajudam)
-            top_positive = shap_series[shap_series > 0].sort_values(ascending=False).head(top_n)
-            
-            # Pega os top N contribuidores negativos (os que mais atrapalham)
-            top_negative = shap_series[shap_series < 0].sort_values(ascending=True).head(top_n)
+            top_features = shap_series.abs().sort_values(ascending=False).head(top_n).index
 
-            # Combina os dois grupos para a explicação
-            combined_series = pd.concat([top_positive, top_negative])
-
-            for feature, shap_val in combined_series.items():
+            for order, feature in enumerate(top_features, start=1):
                 explanations.append({
                     'codigo': df_candidates.iloc[idx].get('codigo', f'instancia_{idx}'),
                     'feature': feature,
-                    'shap_value': shap_val,
-                    'valor_original': df_input.loc[df_input.index[idx], feature]
+                    'shap_value': shap_series[feature],
+                    'valor_original': df_input.iloc[idx][feature],
+                    'ordem_importancia': order
                 })
 
         df_explanations = pd.DataFrame(explanations)
         
+        # --- CORREÇÃO APLICADA AQUI ---
+        # Remove a dimensão extra de shap_values (ex: de (3, 60, 1) para (3, 60))
+        # antes de passá-lo para o DataFrame do pandas.
         squeezed_shap_values = np.squeeze(shap_values)
-
-        if squeezed_shap_values.ndim == 1:
-            data_for_df = squeezed_shap_values.reshape(1, -1)
-        else:
-            data_for_df = squeezed_shap_values
-
         self.background_data['feature_importance'] = pd.DataFrame(
-            data_for_df, columns=self.feature_columns
+            squeezed_shap_values, columns=self.feature_columns
         ).abs().mean().sort_values(ascending=False).to_dict()
 
         return df_explanations
@@ -364,7 +347,7 @@ class MatchPredictor:
 if __name__ == "__main__":
     # --- Configuração de Caminhos ---
     DATA_PATH = "app/data/silver/df_features_train.parquet"
-    MODEL_DIR = "app/model/"
+    MODEL_DIR = "app/model_teste/"
     MODEL_PATH = os.path.join(MODEL_DIR, "match_model.h5")
     SCALER_PATH = os.path.join(MODEL_DIR, "scaler.pkl")
     FEATURES_PATH = os.path.join(MODEL_DIR, "features.pkl")

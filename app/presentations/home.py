@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from presentations.custom_pages import ranking, modelo
 
 st.set_page_config(
-    page_title="Datathon - Decision - Recrutamento e Seleção",
+    page_title="Aderis X",
     page_icon="bar-chart",
     layout="wide", #centered
     initial_sidebar_state="expanded",
@@ -43,16 +43,62 @@ if escolha == "Ranking de Candidatos":
 elif escolha == "Explicacao do Modelo ML":
     modelo.exibir()
 elif escolha == "Introdução":
-    st.title("Datathon - Decision - Recrutamento e Seleção")
-    st.markdown("""
-    Este projeto faz parte do **Datathon da Pós Tech em Data Analytics na FIAP**.  
-    O objetivo é .....)**.
+    st.title("Aderis X – Datathon")
 
-    A aplicação permite .....
+    st.markdown("""
+    🚀 **Este projeto faz parte do Datathon da Pós Tech em Data Analytics da FIAP.**
+
+    ---
+
+    ### **Nosso Propósito**
+
+    Acreditamos em **contratações com 100% de certeza**.  
+    O processo seletivo **não deveria ser um jogo de azar**: cada contratação errada custa tempo, dinheiro e, mais importante, **potencial perdido**.
+
+    Criamos esta ferramenta porque confiamos que a tecnologia de ponta pode **eliminar a incerteza do recrutamento**.  
+    Queremos transformar a busca por talentos em uma **ciência exata**, garantindo que cada pessoa contratada não apenas preencha uma vaga, mas **impulsione o futuro da empresa** e **construa uma carreira duradoura**.
+
+    *Traduzindo dados em decisões, com total transparência.*
+
+    ---
+
+    ###  **Como Funciona**
+
+    Nosso motor de inteligência preditiva utiliza uma **rede neural avançada**, capaz de analisar simultaneamente **dezenas de variáveis críticas**, como:
+
+    - Competências técnicas  
+    - Experiência profissional  
+    - Localização  
+    - Formação acadêmica  
+
+    ---
+
+    ### **Funcionalidades Principais**
+
+    1. **Match Preditivo**  
+    Em segundos, a plataforma cruza os requisitos da vaga com o perfil de cada candidato, gerando um nível de **aderência preciso e instantâneo**.
+
+    2. **Diagnóstico Claro**  
+    Não entregamos apenas um número.  
+    Para cada candidato, nossa ferramenta apresenta **explicações claras e objetivas** sobre o resultado.
+
+    > *Exemplo:*  
+    > *"O candidato X tem **86% de aderência** a esta vaga. Ele possui o conhecimento em SAP exigido, é fluente em inglês e mora no local da vaga. O principal ponto de atenção é a ausência da pós-graduação, que foi listada como um diferencial."*
+
+    ---
+
+    ### **Aderis X: Inteligência a Serviço do Recrutamento**
+
+    Este é o **Aderis X**: sua **plataforma de inteligência preditiva** para recrutamento de alto desempenho.  
+    Capacite sua equipe a tomar decisões **mais rápidas**, **mais inteligentes** e com **maior taxa de sucesso**.
+
+    Com o Aderis X, ofereça aos seus clientes o que ninguém mais pode:  
+    **a certeza de encontrar o candidato ideal. Sempre.**
     """)
 
 
-    st.markdown("Repositório do projeto: [GitHub - Leandrolsc/PosTech_DataAnalytics_Datathon](https://github.com/Leandrolsc/PosTech_DataAnalytics_Datathon)")
+
+    #st.markdown("Repositório do projeto: [GitHub - Leandrolsc/PosTech_DataAnalytics_Datathon](https://github.com/Leandrolsc/PosTech_DataAnalytics_Datathon)")
 
 st.markdown("---")
 st.markdown(

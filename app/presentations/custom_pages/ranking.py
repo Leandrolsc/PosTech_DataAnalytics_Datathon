@@ -26,6 +26,20 @@ def exibir():
 
     listvagasuse = LoadVagasListUseCase()
     lista_vagas = listvagasuse.load_vagas_list()
+
+    st.markdown("""
+                <style>
+                        /* Cor do texto do label "Selecione uma vaga" */
+                        .stSelectbox > label {
+                            color: white;
+                        }
+                        
+                        /* Cor do texto do item selecionado dentro da caixa */
+                        div[data-baseweb="select"] > div {
+                            color: white;
+                        }
+                    </style>
+                    """, unsafe_allow_html=True)
     vaga_selecionada = st.selectbox(
                                     "Selecione uma vaga",
                                     options=lista_vagas
@@ -122,7 +136,8 @@ def exibir():
 
         prospects_df_applicants = prospects_df_applicants.sort_values(by='probabilidade_match', ascending=False)
 
-        colunas_para_exibir = ['titulo',
+        colunas_para_exibir = ['id_vaga',
+                            'titulo',
                             'data_candidatura', 
                             'situacao_candidado', 
                             'probabilidade_match']
@@ -156,16 +171,84 @@ def exibir():
         )
 
         grid_options = gb.build()
-
-        # Exibição sem seleção
-        AgGrid(
+        gb.configure_selection('single')  # apenas uma linha selecionável
+        grid_response_v = AgGrid(
             prospects_df_applicants,
             gridOptions=grid_options,
-            update_mode="NO_UPDATE",
+            update_mode=GridUpdateMode.SELECTION_CHANGED,
             height=400,
             theme="streamlit",  # mantém o visual similar ao st.dataframe
             fit_columns_on_grid_load=True,
             allow_unsafe_jscode=False
         )
+
+        selected_v = grid_response_v["selected_rows"]
+
+        if selected_v is not None and not pd.DataFrame(selected_v).empty:
+            vaga_selecionada = selected_v['Vaga'].values[0]
+            st.markdown(f"\n🧠 Tabela descritiva SHAP para o(a) **{nome_selecionado}** na vaga **{vaga_selecionada}** com as top 5 variaveis que mais impactaram o modelo.")
+            
+            id_vaga_selecionada = selected_v['id_vaga'].values[0]
+
+            feature_selecionada = features_df_applicants[features_df_applicants['id_vaga'] == id_vaga_selecionada]
+           
+            #st.write(feature_selecionada)
+
+
+            # # --- Etapa 3: Gerar e Exibir Explicações SHAP ---
+            try:
+                df_shap_explanations = predictor.explain_batch_with_shap(feature_selecionada, top_n=3)
+
+                top_3_asc = df_shap_explanations[:3]
+              
+                top_3_desc = df_shap_explanations[3:]
+                
+                
+                st.markdown("Top 3 variaveis que mais auxiliaram o modelo")
+                st.dataframe(
+                    top_3_asc[['feature', 'shap_value', 'valor_original']],
+                    use_container_width=True,
+                    column_config={
+                        "feature": "Fator de Influência",
+                        "valor_original": "Valor do Candidato",
+                        "shap_value": st.column_config.NumberColumn(
+                            "Impacto na Previsão",
+                            help="Valores positivos aumentam a chance de match (verde), valores negativos diminuem (vermelho).",
+                            format="%.4f"
+                        )
+                    },
+                    hide_index=True,
+                )
+
+                st.markdown("Top 3 variaveis que mais atrapalharam o modelo")
+                st.dataframe(
+                    top_3_desc[['feature', 'shap_value', 'valor_original']],
+                    use_container_width=True,
+                    column_config={
+                        "feature": "Fator de Influência",
+                        "valor_original": "Valor do Candidato",
+                        "shap_value": st.column_config.NumberColumn(
+                            "Impacto na Previsão",
+                            help="Valores positivos aumentam a chance de match (verde), valores negativos diminuem (vermelho).",
+                            format="%.4f"
+                        )
+                    },
+                    hide_index=True,
+                )
+
+
+            except Exception as e:
+                st.write(f"❌ Ocorreu um erro ao gerar as explicações SHAP: {e}")
+
+        else:
+            st.info("Selecione uma vaga.", icon="ℹ️")
+
     else:
         st.info("Selecione um candidato para ver detalhes.", icon="ℹ️")
+
+
+                        # # Mostrar a importância global das features que foi salva no background_data
+                # st.write("\n🌟 Importância Global das Features (média dos valores SHAP absolutos):")
+                # feature_importance = predictor.get_background_data('feature_importance')
+                # for feature, imp in list(feature_importance.items())[:5]:
+                #     st.write(f"  - {feature}: {imp:.4f}")
