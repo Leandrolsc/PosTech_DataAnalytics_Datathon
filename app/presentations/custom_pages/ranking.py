@@ -204,20 +204,30 @@ def exibir():
                 top_3_desc = df_shap_explanations[3:]
 
                 st.markdown(f"""
-                        Top 3 variaveis que mais auxiliaram o modelo
-                            
-                            - Feature {top_3_asc['feature'][0]}
-                            - Feature {top_3_asc['feature'][1]}
-                            - Feature {top_3_asc['feature'][2]}
+                    ### Principais variáveis que **mais contribuíram** para a previsão
 
-                        Top 3 variaveis que mais atrapalharam o modelo
-                            
-                            - Feature {top_3_desc['feature'][3]}
-                            - Feature {top_3_desc['feature'][4]}
-                            - Feature {top_3_desc['feature'][5]}
-                
+                    1. **{top_3_asc['feature'][0]}**  
+                    Impacto no modelo: **+{top_3_asc['shap_value'][0].round(2)}**
+
+                    2. **{top_3_asc['feature'][1]}**  
+                    Impacto no modelo: **+{top_3_asc['shap_value'][1].round(2)}**
+
+                    3. **{top_3_asc['feature'][2]}**  
+                    Impacto no modelo: **+{top_3_asc['shap_value'][2].round(2)}**
+
+                    ---
+
+                    ### Principais variáveis que **mais prejudicaram** a previsão
+
+                    1. **{top_3_desc['feature'][3]}**  
+                    Impacto no modelo: **{top_3_desc['shap_value'][3].round(2)}**
+
+                    2. **{top_3_desc['feature'][4]}**  
+                    Impacto no modelo: **{top_3_desc['shap_value'][4].round(2)}**
+
+                    3. **{top_3_desc['feature'][5]}**  
+                    Impacto no modelo: **{top_3_desc['shap_value'][5].round(2)}**
                     """)
-
 
 
             except Exception as e:
